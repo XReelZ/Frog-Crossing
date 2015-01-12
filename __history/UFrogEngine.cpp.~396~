@@ -1,0 +1,402 @@
+// ---------------------------------------------------------------------------
+#pragma hdrstop
+
+#include "UFrogEngine.h"
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// class MFrogEngine
+// ---------------------------------------------------------------------------
+__fastcall MFrogEngine::MFrogEngine()
+{
+  Randomize();
+  //
+  play = new MPlayground(20, 11);
+  frog=new MFrog(Random(20),10,5,play);
+}
+
+// ---------------------------------------------------------------------------
+__fastcall MFrogEngine::~MFrogEngine()
+{
+  delete frog;
+  delete play;
+}
+
+// ---------------------------------------------------------------------------
+void __fastcall MFrogEngine::Init()
+{
+  MatrixData md = play->GetMatrixSize();
+
+  for (int i = 0; i < md.y; i++)
+  {
+    if (i%2 ==0)
+    {
+      for (int j = 0; j < md.x; j++)
+      {
+        MTile * tile = play->GetTile(j,i);
+        tile->SetState(true);
+      }
+    }
+    else
+    {
+      int v=random(md.x);
+      MTile * tile = play->GetTile(v,i);
+      if (tile)
+      {
+        tile->SetState(true);
+        //
+        int c = random(2);
+        if (c==0)
+        {
+          tile->SetSpeed(-1);
+        }
+        else
+        {
+          tile->SetSpeed(1);
+        }
+      }
+    }
+  }
+}
+// ---------------------------------------------------------------------------
+void __fastcall MFrogEngine::MoveTiles()
+{
+  MatrixData md = play->GetMatrixSize();
+  MatrixData fd;
+  int lives = frog->GetLives();
+
+  fd.x=-1;
+  fd.y=-1;
+  if (frog)
+  {
+    fd=frog->GetCoords();
+  }
+  for (int i = 0; i < md.y; i++)
+  {
+    for (int j = 0; j < md.x; j++)
+    {
+      MTile * tile = play->GetTile(j,i);
+      if (tile)
+      {
+        bool occupied = tile->GetState();
+        if (occupied)
+        {
+          int speed = tile->GetSpeed();
+          if(speed!=0)
+          {
+            int speedOld=tile->GetSpeed();
+            MatrixData tCoord = tile->GetTileCoords();
+            int x = tCoord.x;
+            int y = tCoord.y;
+            if (speed >0)
+            {
+              x++;
+              if (x >= md.x)
+              {
+                x=0;
+              }
+            }
+            else if (speed<0)
+            {
+              x--;
+              if (x<0)
+              {
+                x= md.x-1;
+              }
+            }
+            //
+            tile->SetState(false);
+            MTile * tileN = play->GetTile(x,y);
+            if (tileN)
+            {
+              tileN->SetState(true);
+              tileN->SetSpeed(speedOld);
+              tile->SetSpeed(0);
+              //
+              if (frog)
+              {
+                if (fd.x==tCoord.x && fd.y==tCoord.y)
+                {
+                  lives--;
+                  frog->SetCoords(x,y);
+                  frog->SetLives(lives);
+                  SetFrogCoords(fd.x / 2, fd.y - 1);
+                }
+              }
+            }
+            break;
+          }
+        }
+      }
+    }
+  }
+}
+// ---------------------------------------------------------------------------
+MatrixData __fastcall MFrogEngine::GetSize()
+{
+  MatrixData md=play->GetMatrixSize();
+  return md;
+}
+// ---------------------------------------------------------------------------
+bool __fastcall MFrogEngine::GetTileState(int x, int y)
+{
+  bool res=false;
+  MTile * tile=play->GetTile(x,y);
+  if (tile)
+  {
+    res=tile->GetState();
+  }
+  return res;
+}
+// ---------------------------------------------------------------------------
+MatrixData __fastcall MFrogEngine::GetFrogCoords()
+{
+  MatrixData res;
+
+  res.x = -1;
+  res.y = -1;
+  if (frog)
+  {
+    res = frog->GetCoords();
+  }
+  return res;
+}
+// ---------------------------------------------------------------------------
+void __fastcall MFrogEngine::SetFrogCoords(int x, int y)
+{
+  if (!frog) return;
+
+  frog->SetCoords(x,y);
+}
+// ---------------------------------------------------------------------------
+int __fastcall MFrogEngine::ManageFrogLives(int x, int y, int aDelta)
+{
+  int res=0;
+
+  if (!frog)
+  {
+    return res;
+  }
+
+  int lives=frog->GetLives();
+  lives+=aDelta;
+  if (lives<=0)
+  {
+    lives=0;
+  }
+  frog->SetLives(lives);
+  res=lives;
+  //
+  return res;
+}
+// ---------------------------------------------------------------------------
+// class MPlayground
+// ---------------------------------------------------------------------------
+__fastcall MPlayground::MPlayground(int aWidth, int aHeight)
+{
+  if (aWidth <= 4)
+  {
+    width = 5;
+  }
+  else
+  {
+    width = aWidth;
+  }
+  if (aHeight <= 4)
+  {
+    height = 5;
+  }
+  else
+  {
+    height = aHeight;
+  }
+
+  lst = new TList();
+  for (int i = 0; i < width; i++)
+  {
+    for (int j = 0; j < height; j++)
+    {
+      MTile *tile = new MTile(this, i, j, false);
+      lst->Add(tile);
+    }
+  }
+}
+  // ---------------------------------------------------------------------------
+MTile * __fastcall MPlayground::GetTile(int x, int y)
+{
+  MTile * res = NULL;
+  //
+  for (int i = 0; i < lst->Count; i++)
+  {
+    MTile * tile = (MTile *)lst->Items[i];
+
+    if (tile)
+    {
+      MatrixData md = tile->GetTileCoords();
+      if (x== md.x && y == md.y)
+      {
+        res = tile;
+        break;
+      }
+    }
+  }
+  //
+  return res;
+}
+// ---------------------------------------------------------------------------
+__fastcall MPlayground::~MPlayground()
+{
+  for (int i = 0; i < lst->Count; i++)
+  {
+    MTile * tile = (MTile *)lst->Items[i];
+
+    if (tile)
+    {
+      delete tile;
+      lst->Items[i] = NULL;
+    }
+  }
+  delete lst;
+}
+
+// ---------------------------------------------------------------------------
+MatrixData __fastcall MPlayground::GetMatrixSize()
+{
+  MatrixData res;
+
+  res.x = width;
+  res.y = height;
+
+  return res;
+}
+
+// ---------------------------------------------------------------------------
+// class MTile
+// ---------------------------------------------------------------------------
+__fastcall MTile::MTile(MPlayground * aPlayGround, int axCoord, int ayCoord, bool aisOccupied)
+{
+  speed = 0;
+  isOccupied = aisOccupied;
+  playGround = aPlayGround;
+  xCoord = 0;
+  yCoord = 0;
+  if (playGround)
+  {
+    MatrixData mSize = playGround->GetMatrixSize();
+
+    if (axCoord >= 0 && axCoord <= mSize.x)
+    {
+      xCoord = axCoord;
+    }
+
+    if (ayCoord >= 0 && ayCoord <= mSize.y)
+    {
+      yCoord = ayCoord;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+__fastcall MTile::~MTile()
+{
+
+}
+
+// ---------------------------------------------------------------------------
+MatrixData __fastcall MTile::GetTileCoords()
+{
+  MatrixData result;
+
+  result.x = xCoord;
+  result.y = yCoord;
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+bool __fastcall MTile::GetState()
+{
+  return isOccupied;
+}
+// ---------------------------------------------------------------------------
+void __fastcall MTile::SetState(bool aOccupied)
+{
+  isOccupied = aOccupied;
+}
+
+int __fastcall MTile::GetSpeed()
+{
+  return speed;
+}
+// ---------------------------------------------------------------------------
+void __fastcall MTile::SetSpeed(int aSpeed)
+{
+  speed = aSpeed;
+}
+// ---------------------------------------------------------------------------
+// class MFrog
+// ---------------------------------------------------------------------------
+__fastcall  MFrog::MFrog (int aX, int aY, int aLives, MPlayground * aPlayground)
+{
+  xCoord = 0;
+  yCoord = 0;
+  lives = 1;
+
+  if (aPlayground)
+  {
+    playGround = aPlayground;
+    MatrixData md = playGround->GetMatrixSize();
+
+    if (aX >= 0 && aX <= md.x && aY >= 0 && aY <= md.y && aLives > 0)
+    {
+      xCoord = aX;
+      yCoord = aY;
+      lives = aLives;
+    }
+  }
+}
+// ---------------------------------------------------------------------------
+__fastcall  MFrog::~MFrog ()
+{
+
+}
+// ---------------------------------------------------------------------------
+MatrixData __fastcall MFrog::GetCoords()
+{
+  MatrixData result;
+
+  result.x = xCoord;
+  result.y = yCoord;
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+void __fastcall MFrog::SetCoords(int x, int y)
+{
+  if (playGround)
+  {
+    MatrixData md = playGround->GetMatrixSize();
+
+    if (x >= 0 && x <= md.x && y >= 0 && y <= md.y)
+    {
+      xCoord = x;
+      yCoord = y;
+    }
+  }
+}
+// ---------------------------------------------------------------------------
+int __fastcall MFrog::GetLives()
+{
+  return lives;
+}
+// ---------------------------------------------------------------------------
+void __fastcall MFrog::SetLives(int aLives)
+{
+  if (lives >= 0)
+  {
+    lives = aLives;
+  }
+}
+// ---------------------------------------------------------------------------
+#pragma package(smart_init)

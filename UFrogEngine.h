@@ -1,0 +1,90 @@
+// ---------------------------------------------------------------------------
+#ifndef UFrogEngineH
+#define UFrogEngineH
+// ---------------------------------------------------------------------------
+#include <vcl.h>
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+struct MatrixData
+{
+  int x;
+  int y;
+};
+
+// ---------------------------------------------------------------------------
+class MTile;
+// ---------------------------------------------------------------------------
+class MPlayground
+{
+  private:
+    int width;
+    int height;
+    TList * lst;
+
+  protected:
+  public:
+    __fastcall MPlayground(int aWidth, int aHeight);
+    __fastcall ~MPlayground();
+    MatrixData __fastcall GetMatrixSize();
+    MTile * __fastcall GetTile(int x, int y);
+};
+
+// ---------------------------------------------------------------------------
+class MTile
+{
+  private:
+    int xCoord;
+    int yCoord;
+    bool isOccupied;
+    MPlayground * playGround;
+    int speed;
+
+  protected:
+  public:
+    __fastcall MTile(MPlayground * aPlayGround, int axCoord, int ayCoord, bool aisOccupied);
+    __fastcall ~MTile();
+    MatrixData __fastcall GetTileCoords();
+    bool __fastcall GetState();
+    void __fastcall SetState(bool aOccupied);
+    int __fastcall GetSpeed();
+    void __fastcall SetSpeed(int aSpeed);
+};
+// ---------------------------------------------------------------------------
+class MFrog
+{
+  private:
+    int xCoord;
+    int yCoord;
+    int lives;
+    MPlayground * playGround;
+  protected:
+  public:
+    __fastcall MFrog(int aX, int aY, int aLives, MPlayground * aPlayGround);
+    __fastcall ~MFrog();
+    MatrixData __fastcall GetCoords();
+    void __fastcall SetCoords(int x, int y);
+    int __fastcall GetLives();
+    void __fastcall SetLives(int aLives);
+};
+// ---------------------------------------------------------------------------
+class MFrogEngine
+{
+  private:
+    MPlayground * play;
+    MFrog * frog;
+  protected:
+  public:
+    __fastcall MFrogEngine();
+    __fastcall ~MFrogEngine();
+    void __fastcall Init();
+    MatrixData __fastcall GetSize();
+    bool __fastcall GetTileState(int x, int y);
+    void __fastcall MoveTiles();
+    MatrixData __fastcall GetFrogCoords();
+    void __fastcall SetFrogCoords(int x, int y);
+    int __fastcall ManageFrogLives(int x, int y, int aDelta);
+};
+
+// ---------------------------------------------------------------------------
+#endif

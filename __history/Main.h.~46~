@@ -1,0 +1,44 @@
+// ---------------------------------------------------------------------------
+
+#ifndef MainH
+#define MainH
+// ---------------------------------------------------------------------------
+#include <System.Classes.hpp>
+#include <Vcl.Controls.hpp>
+#include <Vcl.StdCtrls.hpp>
+#include <Vcl.Forms.hpp>
+#include "UFrogEngine.h"
+#include <Vcl.ExtCtrls.hpp>
+#include <Vcl.Buttons.hpp>
+#include <Vcl.Graphics.hpp>
+
+// ---------------------------------------------------------------------------
+class TMainForm : public TForm
+{
+  __published: // IDE-managed Components
+  TTimer *Timer1;
+  TPanel *Panel1;
+  TLabel *Label1;
+  TSpeedButton *SpeedButton1;
+  TSpeedButton *SpeedButton2;
+  TBevel *Bevel1;
+  TImage *Image1;
+  void __fastcall Timer1Timer(TObject *Sender);
+  void __fastcall FormKeyDown(TObject *Sender, WORD &Key, TShiftState Shift);
+  void __fastcall SpeedButton1Click(TObject *Sender);
+  void __fastcall SpeedButton2Click(TObject *Sender);
+
+  private: // User declarations
+    int fieldWidth;
+    int fieldHeight;
+    MFrogEngine *fEngine;
+    void __fastcall DrawField(bool aClear, TColor aJbaColor);
+  public: // User declarations
+    __fastcall TMainForm(TComponent * Owner);
+    __fastcall ~TMainForm();
+};
+
+// ---------------------------------------------------------------------------
+extern PACKAGE TMainForm * MainForm;
+// ---------------------------------------------------------------------------
+#endif
